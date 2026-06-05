@@ -144,4 +144,4 @@ AZENTRIX-FULLSTACK-TASK2/
 * The saved bundle contains the trained pipeline, model comparison table, and evaluation metrics.
 * The project demonstrates the complete machine learning lifecycle from data preprocessing to deployment.
 
-# Author :Mareti Satisb
+# Author :Mareti Satish
