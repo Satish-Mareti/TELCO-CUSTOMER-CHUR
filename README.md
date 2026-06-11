@@ -15,6 +15,18 @@ End-to-end machine learning pipeline for the Kaggle / IBM Telco Customer Churn d
 
 ---
 
+## Application Output
+
+<p align="center">
+  <img src="image/imagesoutput.png.png" alt="Telco Customer Churn Predictor" width="900">
+</p>
+
+<p align="center">
+  <b>Telco Customer Churn Predictor - Streamlit Dashboard</b>
+</p>
+
+---
+
 ## Expected Dataset
 
 Download the Telco Customer Churn CSV from Kaggle and place it in the project directory or provide its path when training.
@@ -120,6 +132,9 @@ http://localhost:8501
 ```text
 AZENTRIX-FULLSTACK-TASK2/
 │
+├── image/
+│   └── imagesoutput.png.png
+│
 ├── train.py
 ├── app.py
 ├── streamlit_app.py
@@ -144,4 +159,4 @@ AZENTRIX-FULLSTACK-TASK2/
 * The saved bundle contains the trained pipeline, model comparison table, and evaluation metrics.
 * The project demonstrates the complete machine learning lifecycle from data preprocessing to deployment.
 
-# Author :Mareti Satish
+# Author : Mareti Satish
