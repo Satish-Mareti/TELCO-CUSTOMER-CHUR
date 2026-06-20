@@ -160,3 +160,4 @@ AZENTRIX-FULLSTACK-TASK2/
 * The project demonstrates the complete machine learning lifecycle from data preprocessing to deployment.
 
 # Author : Mareti Satish
+"# azentrix_fullstack_task2" 
