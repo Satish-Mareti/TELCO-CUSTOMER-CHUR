@@ -1,50 +1,172 @@
 from __future__ import annotations
 
-import json
+import time
 from pathlib import Path
+
 import streamlit as st
 
-from churn_pipeline import load_model_bundle, parse_input_json, predict_churn
+from churn_pipeline import (
+    load_model_bundle,
+    parse_input_json,
+    predict_churn,
+)
 
 MODEL_PATH = Path("artifacts") / "telco_churn_model.joblib"
 
+# -----------------------------
+# Page Configuration
+# -----------------------------
+st.set_page_config(
+    page_title="Telco Customer Churn Predictor",
+    page_icon="📊",
+    layout="centered",
+)
 
-st.set_page_config(page_title="Telco Churn Predictor", layout="centered")
+st.title("📊 Telco Customer Churn Predictor")
+st.markdown("Predict whether a customer is likely to churn.")
 
-st.title("Telco Customer Churn Predictor")
-
-st.sidebar.header("Input")
-
+# -----------------------------
+# Load Model Once (Cached)
+# -----------------------------
+@st.cache_resource
 def load_bundle():
     if not MODEL_PATH.exists():
-        st.error(f"Model not found at {MODEL_PATH}. Run train.py first.")
+        st.error(
+            f"Model not found at {MODEL_PATH}. Run train.py first."
+        )
         st.stop()
+
     return load_model_bundle(MODEL_PATH)
 
 
-def ui_input():
-    # Minimal set of fields used by the pipeline
-    gender = st.sidebar.selectbox("Gender", ["Male", "Female"], index=0)
-    senior = st.sidebar.selectbox("SeniorCitizen", [0, 1], index=0)
-    partner = st.sidebar.selectbox("Partner", ["Yes", "No"], index=1)
-    dependents = st.sidebar.selectbox("Dependents", ["Yes", "No"], index=1)
-    tenure = st.sidebar.slider("Tenure (months)", 0, 72, 12)
-    phone = st.sidebar.selectbox("PhoneService", ["Yes", "No"], index=0)
-    multiple = st.sidebar.text_input("MultipleLines", "No")
-    internet = st.sidebar.selectbox("InternetService", ["DSL", "Fiber optic", "No"], index=1)
-    online_security = st.sidebar.text_input("OnlineSecurity", "No")
-    online_backup = st.sidebar.text_input("OnlineBackup", "No")
-    device_prot = st.sidebar.text_input("DeviceProtection", "No")
-    tech_support = st.sidebar.text_input("TechSupport", "No")
-    streaming_tv = st.sidebar.text_input("StreamingTV", "No")
-    streaming_movies = st.sidebar.text_input("StreamingMovies", "No")
-    contract = st.sidebar.selectbox("Contract", ["Month-to-month", "One year", "Two year"], index=0)
-    paperless = st.sidebar.selectbox("PaperlessBilling", ["Yes", "No"], index=0)
-    payment = st.sidebar.selectbox("PaymentMethod", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], index=0)
-    monthly = st.sidebar.number_input("MonthlyCharges", min_value=0.0, value=70.0)
-    total = st.sidebar.number_input("TotalCharges", min_value=0.0, value=float(monthly * tenure))
+with st.spinner("Loading model..."):
+    start = time.time()
+    bundle = load_bundle()
+    load_time = time.time() - start
 
-    record = {
+st.write(f"Model load time: {load_time:.2f} seconds")
+print(f"Model load time: {load_time:.2f} seconds")
+
+st.sidebar.success(f"✅ Model Loaded ({load_time:.2f}s)")
+
+# -----------------------------
+# Sidebar Inputs
+# -----------------------------
+st.sidebar.header("Customer Details")
+
+
+def ui_input():
+    gender = st.sidebar.selectbox(
+        "Gender",
+        ["Male", "Female"]
+    )
+
+    senior = st.sidebar.selectbox(
+        "Senior Citizen",
+        [0, 1]
+    )
+
+    partner = st.sidebar.selectbox(
+        "Partner",
+        ["Yes", "No"],
+        index=1
+    )
+
+    dependents = st.sidebar.selectbox(
+        "Dependents",
+        ["Yes", "No"],
+        index=1
+    )
+
+    tenure = st.sidebar.slider(
+        "Tenure (Months)",
+        0,
+        72,
+        12
+    )
+
+    phone = st.sidebar.selectbox(
+        "Phone Service",
+        ["Yes", "No"]
+    )
+
+    multiple = st.sidebar.selectbox(
+        "Multiple Lines",
+        ["Yes", "No", "No phone service"]
+    )
+
+    internet = st.sidebar.selectbox(
+        "Internet Service",
+        ["DSL", "Fiber optic", "No"]
+    )
+
+    online_security = st.sidebar.selectbox(
+        "Online Security",
+        ["Yes", "No", "No internet service"]
+    )
+
+    online_backup = st.sidebar.selectbox(
+        "Online Backup",
+        ["Yes", "No", "No internet service"]
+    )
+
+    device_protection = st.sidebar.selectbox(
+        "Device Protection",
+        ["Yes", "No", "No internet service"]
+    )
+
+    tech_support = st.sidebar.selectbox(
+        "Tech Support",
+        ["Yes", "No", "No internet service"]
+    )
+
+    streaming_tv = st.sidebar.selectbox(
+        "Streaming TV",
+        ["Yes", "No", "No internet service"]
+    )
+
+    streaming_movies = st.sidebar.selectbox(
+        "Streaming Movies",
+        ["Yes", "No", "No internet service"]
+    )
+
+    contract = st.sidebar.selectbox(
+        "Contract",
+        [
+            "Month-to-month",
+            "One year",
+            "Two year",
+        ]
+    )
+
+    paperless = st.sidebar.selectbox(
+        "Paperless Billing",
+        ["Yes", "No"]
+    )
+
+    payment = st.sidebar.selectbox(
+        "Payment Method",
+        [
+            "Electronic check",
+            "Mailed check",
+            "Bank transfer (automatic)",
+            "Credit card (automatic)",
+        ]
+    )
+
+    monthly = st.sidebar.number_input(
+        "Monthly Charges",
+        min_value=0.0,
+        value=70.0
+    )
+
+    total = st.sidebar.number_input(
+        "Total Charges",
+        min_value=0.0,
+        value=float(monthly * max(tenure, 1))
+    )
+
+    return {
         "gender": gender,
         "SeniorCitizen": int(senior),
         "Partner": partner,
@@ -55,7 +177,7 @@ def ui_input():
         "InternetService": internet,
         "OnlineSecurity": online_security,
         "OnlineBackup": online_backup,
-        "DeviceProtection": device_prot,
+        "DeviceProtection": device_protection,
         "TechSupport": tech_support,
         "StreamingTV": streaming_tv,
         "StreamingMovies": streaming_movies,
@@ -65,37 +187,62 @@ def ui_input():
         "MonthlyCharges": float(monthly),
         "TotalCharges": float(total),
     }
-    return record
 
 
-def main():
-    st.sidebar.write("Upload JSON or use the controls to set a single customer record.")
-    uploaded = st.sidebar.file_uploader("Upload JSON file", type=["json"])
+# -----------------------------
+# Input Source
+# -----------------------------
+uploaded = st.sidebar.file_uploader(
+    "Upload Customer JSON",
+    type=["json"]
+)
 
-    if uploaded is not None:
-        try:
-            raw = uploaded.read().decode("utf-8")
-            record = parse_input_json(raw)
-        except Exception as exc:
-            st.sidebar.error(f"Failed to parse uploaded JSON: {exc}")
-            st.stop()
-    else:
-        record = ui_input()
+if uploaded:
+    try:
+        raw = uploaded.read().decode("utf-8")
+        record = parse_input_json(raw)
+    except Exception as exc:
+        st.error(f"Invalid JSON: {exc}")
+        st.stop()
+else:
+    record = ui_input()
 
-    bundle = load_bundle()
-
-    st.subheader("Customer record")
+# -----------------------------
+# Preview Data
+# -----------------------------
+with st.expander("📄 Customer Record", expanded=False):
     st.json(record)
 
-    if st.button("Predict churn"):
-        try:
-            pred = predict_churn(bundle, record)
-            st.success(f"Prediction: {pred['label']} ({pred['probability']:.2%})")
-            st.write("Raw probabilities:")
-            st.json(pred.get("probabilities", {}))
-        except Exception as e:
-            st.error(f"Prediction failed: {e}")
+# -----------------------------
+# Prediction
+# -----------------------------
+if st.button(
+    "🚀 Predict Churn",
+    use_container_width=True,
+):
+    try:
+        with st.spinner("Predicting..."):
+            prediction = predict_churn(
+                bundle,
+                record,
+            )
 
+        st.success(
+            f"Prediction: {prediction['label']}"
+        )
 
-if __name__ == "__main__":
-    main()
+        st.metric(
+            "Churn Probability",
+            f"{prediction['probability']:.2%}"
+        )
+
+        if "probabilities" in prediction:
+            st.subheader("Probability Breakdown")
+            st.json(
+                prediction["probabilities"]
+            )
+
+    except Exception as e:
+        st.error(
+            f"Prediction failed: {e}"
+        )
