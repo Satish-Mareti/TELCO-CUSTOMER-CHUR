@@ -1,3 +1,40 @@
+import streamlit as st
+
+st.markdown("""
+<style>
+
+/* Hide Streamlit toolbar */
+[data-testid="stToolbar"] {
+    display: none !important;
+}
+
+/* Hide top decoration */
+[data-testid="stDecoration"] {
+    display: none !important;
+}
+
+/* Hide footer */
+footer {
+    visibility: hidden !important;
+}
+
+/* Hide header */
+header {
+    visibility: hidden !important;
+}
+
+/* Hide floating status widget */
+[data-testid="stStatusWidget"] {
+    display: none !important;
+}
+
+/* Hide any fixed bottom-right buttons */
+button[kind="header"] {
+    display: none !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 from __future__ import annotations
 
 import time
