@@ -89,7 +89,7 @@ margin-bottom:20px;
 📊 Telco Customer Churn Predictor
 </h1>
 <h4 style="color:white;">
-AI Powered Customer Retention Analytics Dashboard
+ Customer Retention Analytics Dashboard
 </h4>
 </div>
 """, unsafe_allow_html=True)
@@ -118,6 +118,17 @@ st.info(f"🚀 Model Ready ({load_time:.2f}s)")
 print(f"Model load time: {load_time:.2f} seconds")
 
 st.sidebar.success(f"✅ Model Loaded ({load_time:.2f}s)")
+# -----------------------------
+# Navigation
+# -----------------------------
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "Predict",
+        "Analytics",
+        "About"
+    ]
+)
 
 # -----------------------------
 # Sidebar Inputs
@@ -257,79 +268,193 @@ def ui_input():
         "MonthlyCharges": float(monthly),
         "TotalCharges": float(total),
     }
-
-
 # -----------------------------
-# Input Source
+# Preview Data + Prediction
 # -----------------------------
-uploaded = st.sidebar.file_uploader(
-    "Upload Customer JSON",
-    type=["json"]
-)
+if page == "Predict":
 
-if uploaded:
-    try:
-        raw = uploaded.read().decode("utf-8")
-        record = parse_input_json(raw)
-    except Exception as exc:
-        st.error(f"Invalid JSON: {exc}")
-        st.stop()
-else:
-    record = ui_input()
+    # Make sure record exists
+    uploaded = st.sidebar.file_uploader(
+        "Upload Customer JSON",
+        type=["json"]
+    )
 
-# -----------------------------
-# Preview Data
-# -----------------------------
-with st.expander("📄 Customer Information", expanded=False):
-    st.json(record)
+    if uploaded:
+        try:
+            raw = uploaded.read().decode("utf-8")
+            record = parse_input_json(raw)
+        except Exception as exc:
+            st.error(f"Invalid JSON: {exc}")
+            st.stop()
+    else:
+        record = ui_input()
+
+    with st.expander(
+        "📄 Customer Information",
+        expanded=False
+    ):
+        st.json(record)
+
 
 # -----------------------------
 # Prediction
 # -----------------------------
-if st.button(
-    "🚀 Predict Churn",
-    use_container_width=True,
-):
-    try:
-        with st.spinner("Predicting..."):
-            prediction = predict_churn(
-                bundle,
-                record,
-            )
+if page == "Predict":
 
-        prob = float(prediction["probability"])
+    if st.button(
+        "🚀 Predict Churn",
+        use_container_width=True,
+    ):
+        try:
+            with st.spinner("Predicting..."):
+                prediction = predict_churn(
+                    bundle,
+                    record,
+                )
 
-        col1, col2 = st.columns(2)
+            prob = float(prediction["probability"])
 
-        with col1:
+            if prob >= 0.8:
+                risk = "🔴 Critical"
+            elif prob >= 0.6:
+                risk = "🟠 High"
+            elif prob >= 0.4:
+                risk = "🟡 Medium"
+            else:
+                risk = "🟢 Low"
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.metric(
+                    "Prediction",
+                    prediction["label"]
+                )
+
+            with col2:
+                st.metric(
+                    "Churn Risk",
+                    f"{prob:.2%}"
+                )
+
             st.metric(
-                "Prediction",
-                prediction["label"]
+                "Risk Level",
+                risk
             )
 
-        with col2:
+            revenue_risk = (
+                record["MonthlyCharges"]
+                * prob
+                * 12
+            )
+
             st.metric(
-                "Churn Risk",
-                f"{prob:.2%}"
+                "Annual Revenue At Risk",
+                f"${revenue_risk:,.2f}"
             )
 
-        st.subheader("Risk Meter")
-        st.progress(prob)
+            recommendations = []
 
-        if prob >= 0.70:
-            st.error("⚠ High Churn Risk")
-        elif prob >= 0.40:
-            st.warning("⚠ Medium Churn Risk")
-        else:
-            st.success("✅ Customer Likely To Stay")
+            if record["Contract"] == "Month-to-month":
+                recommendations.append(
+                    "💰 Offer annual contract discount"
+                )
 
-        if "probabilities" in prediction:
-            st.subheader("Probability Breakdown")
-            st.json(
-                prediction["probabilities"]
+            if record["MonthlyCharges"] > 80:
+                recommendations.append(
+                    "🎁 Offer discounted subscription plan"
+                )
+
+            if record["TechSupport"] == "No":
+                recommendations.append(
+                    "🛠 Offer premium technical support"
+                )
+
+            if record["OnlineSecurity"] == "No":
+                recommendations.append(
+                    "🔒 Recommend online security package"
+                )
+
+            st.subheader(
+                "🎯 Retention Recommendations"
             )
 
-    except Exception as e:
-        st.error(
-            f"Prediction failed: {e}"
-        )
+            for item in recommendations:
+                st.info(item)
+
+            st.subheader("Risk Meter")
+            st.progress(prob)
+
+            if prob >= 0.70:
+                st.error("⚠ High Churn Risk")
+            elif prob >= 0.40:
+                st.warning("⚠ Medium Churn Risk")
+            else:
+                st.success("✅ Customer Likely To Stay")
+
+        except Exception as e:
+            st.error(
+                f"Prediction failed: {e}"
+            )
+# -----------------------------
+# Analytics Page
+# -----------------------------
+if page == "Analytics":
+
+    st.title("📈 Model Analytics")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric("Dataset Size", "7043")
+
+    with col2:
+        st.metric("Churn Rate", "26.5%")
+
+    with col3:
+        st.metric("Sampling", "SMOTE")
+
+    with col4:
+        st.metric("Deployment", "Streamlit")
+
+    st.divider()
+
+    st.subheader("📊 Model Performance")
+
+    st.info("Add Confusion Matrix, ROC Curve and Feature Importance images here.")
+
+    # Later
+    # st.image("artifacts/confusion_matrix.png")
+    # st.image("artifacts/roc_curve.png")
+# -----------------------------
+# About Page
+# -----------------------------
+if page == "About":
+
+    st.title("ℹ️ About Project")
+
+    st.markdown("""
+    ## AI-Powered Customer Churn Prediction & Retention Analytics Platform
+
+    This project predicts whether a telecom customer is likely to churn.
+
+    ### Features
+    - End-to-End Machine Learning Pipeline
+    - SMOTE for Class Imbalance
+    - Hyperparameter Tuning
+    - Real-Time Prediction
+    - Revenue Risk Estimation
+    - Retention Recommendations
+    - Interactive Streamlit Dashboard
+
+    ### Tech Stack
+    - Python
+    - Scikit-Learn
+    - Pandas
+    - NumPy
+    - Streamlit
+    - Imbalanced-Learn (SMOTE)
+
+    ### Developed By
+    Mareti Satish
+    """)
