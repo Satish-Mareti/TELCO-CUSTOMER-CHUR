@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import time
+from pathlib import Path
+
 import streamlit as st
 
 st.markdown("""
@@ -35,12 +40,6 @@ button[kind="header"] {
 
 </style>
 """, unsafe_allow_html=True)
-from __future__ import annotations
-
-import time
-from pathlib import Path
-
-import streamlit as st
 
 from churn_pipeline import (
     load_model_bundle,
