@@ -122,7 +122,7 @@ python -m streamlit run streamlit_app.py
 The application will open in your browser at:
 
 ```text
-http://localhost:8501
+https://telco-customer-chur-46rwubyn53wi77rcfjfrcy.streamlit.app/
 ```
 
 ---
